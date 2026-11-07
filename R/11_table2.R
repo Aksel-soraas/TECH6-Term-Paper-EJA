@@ -1,16 +1,5 @@
-
-
-#This will be moved to the helpers
-
-covs <- c("vshr_islam1994", "partycount", "shhs", "lpop1994", "ageshr19", "ageshr60", "sexr", "merkezi", "merkezp", "subbuyuk", "buyuk")
-
-pd <- grep("^pd_", names(df), value = TRUE)
-controls <- c(covs, pd)
-
-t2_data <- df |>
-    drop_na(all_of(c("hischshr1520f", "hischshr1520m", "i94", "iwm94", controls)))
-nrow(t2_data)
-
+source("R/00_Setup.R")
+source("R/02_helpers.R")
 
 #This is exclusively for table2
 ik_bandwidth <- function(y, x) {
@@ -52,15 +41,15 @@ cub <- c(quad, "vi3", "vi3_i")
 t2_reg <- function(outcome, poly = NULL, use_controls= TRUE, h = Inf){
     rhs <- c("i94", poly, if (use_controls) controls)
     feols(reformulate(rhs, response = outcome),
-    data = t2_data |> filter(abs(iwm94) < h),
+    data = matched_sample |> filter(abs(iwm94) < h),
     cluster = ~pcode)
 }
 
 table2_models <- function(g) {
     y      <- paste0("hischshr1520", g)
     y_stud <- paste0("studshr1530", g)
-    h      <- ik_bandwidth(t2_data[[y]],    t2_data$iwm94)
-    h_stud <- ik_bandwidth(t2_data[[y_stud]], t2_data$iwm94)
+    h      <- ik_bandwidth(matched_sample[[y]],    matched_sample$iwm94)
+    h_stud <- ik_bandwidth(matched_sample[[y_stud]], matched_sample$iwm94)
 
     list(
         "(1)" = t2_reg(y, use_controls = FALSE),
@@ -83,8 +72,8 @@ etable(women, keep = "i94", digits = 3, fitstat = ~my + n + r2)
 
 gender_pvalue <- function(stub, poly = NULL, use_controls = TRUE, h_f = Inf, h_m = Inf) {
     stacked <- bind_rows(
-        t2_data |> filter(abs(iwm94) < h_f) |> mutate(y = .data[[paste0(stub, "f")]], female = 1),
-        t2_data |> filter(abs(iwm94) < h_m) |> mutate(y = .data[[paste0(stub, "m")]], female = 0)
+        matched_sample |> filter(abs(iwm94) < h_f) |> mutate(y = .data[[paste0(stub, "f")]], female = 1),
+        matched_sample |> filter(abs(iwm94) < h_m) |> mutate(y = .data[[paste0(stub, "m")]], female = 0)
         )
     rhs <- c("i94", poly, if (use_controls) controls)
     fml <- reformulate(paste0("female * (", paste(rhs, collapse = " + "), ")"), response =  "y")
@@ -92,10 +81,10 @@ gender_pvalue <- function(stub, poly = NULL, use_controls = TRUE, h_f = Inf, h_m
     2 * pnorm(-abs(coef(fit)[["female:i94"]] / se(fit)[["female:i94"]]))
 }
 
-h_f      <- ik_bandwidth(t2_data$hischshr1520f, t2_data$iwm94)
-h_m      <- ik_bandwidth(t2_data$hischshr1520m, t2_data$iwm94)
-h_stud_f <- ik_bandwidth(t2_data$studshr1530f, t2_data$iwm94)
-h_stud_m <- ik_bandwidth(t2_data$studshr1530m, t2_data$iwm94)
+h_f      <- ik_bandwidth(matched_sample$hischshr1520f, matched_sample$iwm94)
+h_m      <- ik_bandwidth(matched_sample$hischshr1520m, matched_sample$iwm94)
+h_stud_f <- ik_bandwidth(matched_sample$studshr1530f, matched_sample$iwm94)
+h_stud_m <- ik_bandwidth(matched_sample$studshr1530m, matched_sample$iwm94)
 
 hs <- "hischshr1520"
 p_values <- c(
