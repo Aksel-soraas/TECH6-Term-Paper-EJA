@@ -18,9 +18,7 @@ t1_labels <- c(
     merkezi        = "District center",
     merkezp        = "Province center",
     subbuyuk       = "Sub-metro center")
-
-t1_stars <- function(p) ifelse(is.na(p), "", ifelse(p < 0.001, "***", ifelse(p < 0.01, "**", ifelse(p < 0.05, "*", ""))))
-
+    
 balance_row <- function(v) {
     x   <- t1_data[[v]]
     isl <- x[t1_data$i94 == 1 & !is.na(x)]

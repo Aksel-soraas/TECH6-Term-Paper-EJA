@@ -1,3 +1,5 @@
+source(here::here("R", "00_Setup.R"))
+source(here::here("R", "02_helpers.R"))
 
 outcomes <- c("ahischshr15_19f", "ahischshr15_19m", "ahischshr15_29f", "ahischshr15_29m", "nevm15_19f", "nevm15_19m")
 

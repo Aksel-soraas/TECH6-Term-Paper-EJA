@@ -1,4 +1,5 @@
-source("R/00_Setup.R")
+source(here::here("R", "00_Setup.R"))
+source(here::here("R", "02_helpers.R"))
 
 fig2a_data <- df |>
     drop_na(iwm94) |>
@@ -18,5 +19,4 @@ fig2a <- ggplot(fig2a_data, aes(x = margin)) +
     axis.ticks = element_line(linewidth = 0.3),
     panel.border = element_rect(color = "black", fill = NA, linewidth = 0.6))
 
-dir.create(here("output", "figures"), recursive = TRUE, showWarnings = FALSE)
 ggsave(here("output", "figures", "figure2a.png"), fig2a, width = 7, height = 5, dpi = 300)

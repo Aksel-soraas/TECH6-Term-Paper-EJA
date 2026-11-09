@@ -1,42 +1,5 @@
-source("R/00_Setup.R")
-source("R/02_helpers.R")
-
-#This is exclusively for table2
-ik_bandwidth <- function(y, x) {
-    N <- length(x)
-    h1 <- 1.84 * sd(x) * N^(-1/5)
-    left <- x >= -h1 & x < 0
-    right <- x >= 0 & x <= h1
-    f0 <- (sum(left) + sum(right)) / (2 * N * h1)
-    sigma2 <- (sum((y[left] - mean(y[left]))^2) + 
-            sum((y[right] - mean(y[right]))^2)) / 
-            (sum(left) + sum(right))
-
-    med_left <- median(x[x < 0])
-    med_right <- median(x[x >= 0])
-    mid <- x >= med_left & x <= med_right
-    fit3 <- lm(y ~I(x >= 0) + x + I(x^2) + I(x^3), subset = mid)
-    m3 <- 6 * coef(fit3)[5]
-    N_right <- sum(x >= 0)
-    N_left <- sum(x < 0)
-    base <- 3.56 * (sigma2 / (f0 * max(m3^2, 0.01)))^(1/7)
-    h2_right <- base * N_right^(-1/7)
-    h2_left <- base * N_left^(-1/7)
-
-    in_right <- x >= 0 & x <= h2_right
-    in_left <- x >= -h2_left & x < 0 
-    m2_right <- 2 * coef(lm(y ~ x + I(x^2), subset = in_right))[3]
-    m2_left <- 2 * coef(lm(y ~ x + I(x^2), subset = in_left))[3]
-    r_right <- 720 * sigma2 / (sum(in_right) * h2_right^4)
-    r_left <- 720 * sigma2 / (sum(in_left) * h2_left^4)
-    h_ik <- 3.4375 * (2 * sigma2 / (f0 * ((m2_right - m2_left)^2 + r_right + r_left)))^(1/5) * N^(-1/5)
-
-    unname(h_ik)
-}
-
-lin <- c("vi1", "vi1_i")
-quad <- c(lin, "vi2", "vi2_i")
-cub <- c(quad, "vi3", "vi3_i")
+source(here::here("R", "00_Setup.R"))
+source(here::here("R", "02_helpers.R"))
 
 t2_reg <- function(outcome, poly = NULL, use_controls= TRUE, h = Inf){
     rhs <- c("i94", poly, if (use_controls) controls)
@@ -149,6 +112,5 @@ t2_tt <- tt(table2, notes = "Standard errors clustered by province in parenthese
 
 t2_tt                                                   
 
-dir.create(here("output", "tables"), recursive = TRUE, showWarnings = FALSE)
 save_tt(t2_tt, here("output", "tables", "table2.tex"), overwrite = TRUE)
 save_tt(t2_tt, here("output", "tables", "table2.html"), overwrite = TRUE)

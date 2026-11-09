@@ -1,5 +1,5 @@
-source("R/00_Setup.R")
-source("R/02_helpers.R")
+source(here::here("R", "00_Setup.R"))
+source(here::here("R", "02_helpers.R"))
 
 fig1_data <- matched_sample |>
     select(margin =vi1, share = vshr_islam1994) |>
@@ -21,5 +21,4 @@ fig1 <- ggplot(fig1_data, aes(x = share, y = margin)) +
     theme_classic(base_size= 14) +
     theme(aspect.ratio = 0.7, text = element_text(family = "serif")) 
 
-dir.create(here("output", "figures"), recursive = TRUE, showWarnings = FALSE)
 ggsave(here("output", "figures", "figure1.png"), fig1, width = 7, height = 5, dpi = 300)

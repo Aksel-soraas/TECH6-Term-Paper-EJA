@@ -1,7 +1,7 @@
+source(here::here("R", "00_Setup.R"))
+source(here::here("R", "02_helpers.R"))
 
-t3_data <- df |>
-    drop_na(all_of(c("hischshr1520f", "i94", "iwm94", controls)))
-nrow(t3_data)
+t3_data <- matched_sample
 
 polys <- list("None" = NULL,
             "Linear" = lin,
@@ -35,8 +35,6 @@ for (i in 1:nrow(results)) {
     results$p[i]   <- pvalue(fit)[["i94"]]
     results$n[i]   <- nobs(fit)
 }
-
-stars <- function(p) ifelse(p < 0.01, "***", ifelse(p < 0.05, "**", ifelse(p < 0.1, "*", "")))
 
 make_t3_panel <- function(gender) {
     cells <- results |>
