@@ -6,6 +6,7 @@ library(haven)
 library(here)
 library(modelsummary)
 library(tinytable)
+library(patchwork)
 
 # rdd is an archived package and has to be installed
 # by running the following in R console:
