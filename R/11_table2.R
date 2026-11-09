@@ -1,18 +1,28 @@
 source(here::here("R", "00_Setup.R"))
 source(here::here("R", "02_helpers.R"))
 
+#IK bandwidths, one for each outcome and gender
+h_f      <- ik_bandwidth(matched_sample$hischshr1520f, matched_sample$iwm94)
+h_m      <- ik_bandwidth(matched_sample$hischshr1520m, matched_sample$iwm94)
+h_stud_f <- ik_bandwidth(matched_sample$studshr1530f, matched_sample$iwm94)
+h_stud_m <- ik_bandwidth(matched_sample$studshr1530m, matched_sample$iwm94)
+
+#Run regression of the outcome on i94, with optional polynomials and controls
 t2_reg <- function(outcome, poly = NULL, use_controls= TRUE, h = Inf){
+    #Right-hand side variables
     rhs <- c("i94", poly, if (use_controls) controls)
     feols(reformulate(rhs, response = outcome),
+    #Only municipalities within bandwidth are used
     data = matched_sample |> filter(abs(iwm94) < h),
+    #Standard errors clustered by province
     cluster = ~pcode)
 }
 
-table2_models <- function(g) {
+#Run nine regressions for one gender: (1)-(2) OLS, (3)-(6) linear RD at different bandwidths, (7)-(8) quadratic and cubic, (9) enrollment
+table2_models <- function(g, h, h_stud) {
+    #Outcome names for gender, g
     y      <- paste0("hischshr1520", g)
     y_stud <- paste0("studshr1530", g)
-    h      <- ik_bandwidth(matched_sample[[y]],    matched_sample$iwm94)
-    h_stud <- ik_bandwidth(matched_sample[[y_stud]], matched_sample$iwm94)
 
     list(
         "(1)" = t2_reg(y, use_controls = FALSE),
@@ -27,28 +37,25 @@ table2_models <- function(g) {
     )
 }
 
-women <- table2_models("f")
-men   <- table2_models("m")
+women <- table2_models("f", h_f, h_stud_f)
+men   <- table2_models("m", h_m, h_stud_m)
 
-etable(men,   keep = "i94", digits = 3, fitstat = ~my + n + r2)
-etable(women, keep = "i94", digits = 3, fitstat = ~my + n + r2)
-
+#p-values for whether the effect on women equals the effect on men
 gender_pvalue <- function(stub, poly = NULL, use_controls = TRUE, h_f = Inf, h_m = Inf) {
+    #Stacks women's data on men's data
     stacked <- bind_rows(
         matched_sample |> filter(abs(iwm94) < h_f) |> mutate(y = .data[[paste0(stub, "f")]], female = 1),
-        matched_sample |> filter(abs(iwm94) < h_m) |> mutate(y = .data[[paste0(stub, "m")]], female = 0)
-        )
+        matched_sample |> filter(abs(iwm94) < h_m) |> mutate(y = .data[[paste0(stub, "m")]], female = 0))
+    #Interact every variable with female, female:i94 is the difference between women's and men's effects
     rhs <- c("i94", poly, if (use_controls) controls)
     fml <- reformulate(paste0("female * (", paste(rhs, collapse = " + "), ")"), response =  "y")
+    #Cluster by province. No small-sample correction (K.adj = FALSE)
     fit <- feols(fml, data = stacked, cluster = ~pcode, ssc = ssc(K.adj = FALSE))
+    #difference divided by SE, two-sided p-value from the normal distribution
     2 * pnorm(-abs(coef(fit)[["female:i94"]] / se(fit)[["female:i94"]]))
 }
 
-h_f      <- ik_bandwidth(matched_sample$hischshr1520f, matched_sample$iwm94)
-h_m      <- ik_bandwidth(matched_sample$hischshr1520m, matched_sample$iwm94)
-h_stud_f <- ik_bandwidth(matched_sample$studshr1530f, matched_sample$iwm94)
-h_stud_m <- ik_bandwidth(matched_sample$studshr1530m, matched_sample$iwm94)
-
+#Gender test for each column, each gender with its own bandwidth
 hs <- "hischshr1520"
 p_values <- c(
     "(1)" = gender_pvalue(hs, use_controls = FALSE),
@@ -61,17 +68,20 @@ p_values <- c(
     "(8)" = gender_pvalue(hs, cub,  h_f = h_f,     h_m = h_m),
     "(9)" = gender_pvalue("studshr1530", lin, h_f = h_stud_f, h_m = h_stud_m)
 )
-round(p_values, 3)
 
+#Turn the regressions into panel rows
 make_panel <- function(models, h, h_stud) {
+    #Bandwidth for each column and mean of the outcome in each regression
     bw <- c(1, 1, h, h, h/2, h*2, h, h, h_stud)
     means <- sapply(models, function(m) fitstat(m, "my") [[1]])
 
+    #Outcome mean and bandwidths as extra rows
     extra <- data.frame(term = c("Outcome mean", "Bandwidth"),
                         rbind(sprintf("%.3f", means), sprintf("%.3f", bw)), 
                         check.names = FALSE) |>
         setNames(c("term", names(models)))
 
+    #Rows for the i94 coefficients, SE, R2 and observations and stars at given values
     tab <- modelsummary(models,
                         output = "data.frame",
                         coef_map = c("i94" = "Islamic mayor in 1994"),
@@ -80,18 +90,21 @@ make_panel <- function(models, h, h_stud) {
                         gof_map  = list(list(raw = "r.squared", clean = "R2", fmt = 2),
                                         list(raw = "nobs",      clean = "Observations", fmt = 0)),
                         add_rows = extra)
-
+    #Remove label on the SE row and drop helper columns
     tab$term[tab$statistic == "std.error"] <- ""
     tab <- tab |> select(-part, -statistic)
+    #Reorder to the paper's order
     tab[c(5, 1, 2, 6, 3, 4), ]
 }
 
 panel_a <- make_panel(women, h_f, h_stud_f)
 panel_b <- make_panel(men,   h_m, h_stud_m)
 
-p_row <- data.frame(term = "p_value", t(sprintf("%.3f", p_values)), check.names = FALSE) |>
+#Create a row with all nine p-values
+p_row <- data.frame(term = "p-value", t(sprintf("%.3f", p_values)), check.names = FALSE) |>
     setNames(names(panel_a))
 
+#Header rows for each column
 spec <- data.frame(
     term = c("Control function", "Bandwidth", "Covariates"),
     rbind(c("None", "None", rep("Linear", 4), "Quadratic", "Cubic", "Linear"),
@@ -100,17 +113,17 @@ spec <- data.frame(
   check.names = FALSE) |>
   setNames(names(panel_a))
 
+#Stack header and panels into one table
 table2 <- bind_rows(spec, panel_a, panel_b, p_row)
 names(table2)[1] <- " "
 
+#Format the table with notes, column groups and panel headings
 t2_tt <- tt(table2, notes = "Standard errors clustered by province in parentheses. * p<0.10, ** p<0.05, *** p<0.01.") |>
   group_tt(j = list("High school completion, age 15-20 (2000)" = 2:9,
                     "Enrollment, 15-30" = 10),
            i = list("Panel A: Women" = 4,
                     "Panel B: Men"   = 10,
-                    "Panel C: Test of equality, women = men" = 16))
-
-t2_tt                                                   
+                    "Panel C: Test of equality, women = men" = 16))          
 
 save_tt(t2_tt, here("output", "tables", "table2.tex"), overwrite = TRUE)
 save_tt(t2_tt, here("output", "tables", "table2.html"), overwrite = TRUE)
