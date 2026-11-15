@@ -1,0 +1,4 @@
+Standard error of the women's DiD: 0.0112
+Paper's effect (full sample, 2000): 0.0280
+Minimum detectable effect (5% significance, 80% power): 0.0313
+Power to detect the paper's effect: 0.707

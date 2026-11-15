@@ -1,0 +1,56 @@
+\begin{table}
+\centering
+\begin{talltblr}[         %% tabularray outer open
+entry=none,label=none,
+note{}={Sample: 1609 municipalities with high school shares for both genders in 1990 and 2000. Treatment is an Islamic mayor elected in 1994; the running variable is the Islamic win margin.},
+note{ }={The 1990 shares are measured before the 1994 election and cannot be affected by it; the 1990 column is therefore a placebo test. Change 1990-2000 is the 2000 share minus the 1990 share. Gap (women - men) is the women's share minus the men's share.},
+note{  }={Panel A: local linear regression within the paper's IK bandwidth, uniform kernel, the paper's controls, standard errors clustered by province.},
+note{   }={Panel B: rdrobust with its own MSE-optimal bandwidth per outcome, triangular kernel, the same controls, conventional estimate with robust bias-corrected confidence interval and p-value, clustered by province. In Panel B the bandwidth is chosen separately for each outcome, so the change estimate is not the 2000 estimate minus the 1990 estimate.},
+note{    }={Women's share on the secular side at the cutoff: 0.061 (1990), 0.148 (2000), 0.087 (change). 64 provinces (clusters) inside the bandwidth.},
+note{     }={95% confidence intervals in brackets. * p<0.10, ** p<0.05, *** p<0.01.},
+]                     %% tabularray outer close
+{                     %% tabularray inner open
+colspec={Q[]Q[]Q[]Q[]},
+hline{2}={3-4}{solid, black, 0.03em},
+hline{2}={2}{solid, black, 0.03em, l=-0.5},
+hline{3}={1-4}{solid, black, 0.05em},
+hline{1}={1-4}{solid, black, 0.08em},
+hline{31}={1-4}{solid, black, 0.08em},
+cell{1}{1}={}{halign=c},
+cell{1}{2}={c=3}{halign=c},
+cell{1}{3}={}{halign=c},
+cell{1}{4}={}{halign=c},
+cell{3,15}{1}={c=4}{},
+}                     %% tabularray inner close
+& High school share, age 15-20 &  &  \\
+& 1990 (pre-election) & 2000 & Change 1990-2000 \\
+Panel A: Paper's method & Panel A: Paper's method & Panel A: Paper's method & Panel A: Paper's method \\
+Women & 0.014* & 0.027* & 0.014 \\
+& [-0.001, 0.028] & [0.000, 0.055] & [-0.009, 0.036] \\
+p-value & 0.062 & 0.053 & 0.222 \\
+Men & 0.005 & 0.011 & 0.006 \\
+& [-0.020, 0.029] & [-0.011, 0.034] & [-0.012, 0.025] \\
+p-value & 0.696 & 0.320 & 0.484 \\
+Gap (women - men) & 0.009 & 0.016* & 0.007 \\
+& [-0.012, 0.029] & [-0.002, 0.034] & [-0.019, 0.034] \\
+p-value & 0.402 & 0.074 & 0.575 \\
+N & 595 & 595 & 595 \\
+Bandwidth & 0.240 & 0.240 & 0.240 \\
+Panel B: rdrobust & Panel B: rdrobust & Panel B: rdrobust & Panel B: rdrobust \\
+Women & 0.038*** & 0.043*** & 0.003 \\
+& [0.014, 0.067] & [0.020, 0.073] & [-0.018, 0.021] \\
+p-value & 0.002 & 0.001 & 0.857 \\
+N & 164 & 175 & 223 \\
+Bandwidth & 0.059 & 0.062 & 0.082 \\
+Men & 0.012 & 0.006 & -0.002 \\
+& [-0.010, 0.036] & [-0.019, 0.030] & [-0.029, 0.022] \\
+p-value & 0.279 & 0.656 & 0.781 \\
+N & 205 & 190 & 210 \\
+Bandwidth & 0.073 & 0.067 & 0.075 \\
+Gap (women - men) & 0.014 & 0.014 & 0.004 \\
+& [-0.007, 0.036] & [-0.008, 0.038] & [-0.018, 0.029] \\
+p-value & 0.181 & 0.194 & 0.660 \\
+N & 225 & 242 & 213 \\
+Bandwidth & 0.083 & 0.093 & 0.077 \\
+\end{talltblr}
+\end{table}
