@@ -7,6 +7,8 @@ library(here)
 library(modelsummary)
 library(tinytable)
 library(patchwork)
+library(MatchIt)
+library(cobalt)
 
 # rdd is an archived package and has to be installed
 # by running the following in R console:
