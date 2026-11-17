@@ -69,7 +69,7 @@ table3 <- bind_rows(make_t3_panel("f"), make_t3_panel("m"))
 names(table3) <- c(" ", "1", "0.5", "0.25", "0.1", "0.05")
 
 #Format table with note, column group and panel headings
-t3_tt <- tt(table3, notes = "Each cell is an RD estimate using the bandwidth (column) and polynomial control function (row). All specifications include covariates and province dummies. Standard errors clustered by province in parentheses. * p<0.10, ** p<0.05, *** p<0.01.") |>
+t3_tt <- tt(table3, caption = "TABLE III: Alternative RD specifications", notes = "Each cell is an RD estimate using the bandwidth (column) and polynomial control function (row). All specifications include covariates and province dummies. Standard errors clustered by province in parentheses. * p<0.10, ** p<0.05, *** p<0.01.") |>
     group_tt(j = list("Bandwidth" = 2:6), 
              i = list("Panel A: Women" = 1, "Panel B: Men" = 12))
 

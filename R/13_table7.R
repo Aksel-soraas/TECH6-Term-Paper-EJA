@@ -73,7 +73,7 @@ table7 <- as.data.frame(table7)
 names(table7) <- c(" ", "Women", "Men", "Women ", "Men ", "Women  ", "Men  ")
 
 #Format table with note, column groups and panel headings
-t7_tt <- tt(table7, notes = "Panel A: OLS on the full sample. Panel B: local linear RD with covariates; h is the Imbens-Kalyanaraman bandwidth, computed separately for each outcome. Standard errors clustered by province in parentheses. * p<0.10, ** p<0.05, *** p<0.01.") |>
+t7_tt <- tt(table7, caption = "TABLE VII: RD treatment effects of Islamic rule on education in 2011", notes = "Panel A: OLS on the full sample. Panel B: local linear RD with covariates; h is the Imbens-Kalyanaraman bandwidth, computed separately for each outcome. Standard errors clustered by province in parentheses. * p<0.10, ** p<0.05, *** p<0.01.") |>
     group_tt(j = list("High school, 15-19" = 2:3, "High school, 15-29" = 4:5, "Unmarried, 15-19" = 6:7),
              i = list("Panel A: Global OLS" = 1, "Panel B: Conditional local linear RD" = 8))
 

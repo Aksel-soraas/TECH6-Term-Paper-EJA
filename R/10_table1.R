@@ -47,7 +47,7 @@ table1 <- as.data.frame(table1)
 names(table1) <- c(" ", "All", "Islamic", "Secular", "Difference")
 
 #Create table using tinytables, add footnotes
-t1_tt <- tt(table1, notes = "Columns 1-3: means with standard deviations in parentheses. Column 4: difference in means (Islamic - Secular), standard errors from a two-sample t-test with equal variances in parentheses. * p<0.10, ** p<0.05, *** p<0.01.") |>
+t1_tt <- tt(table1, caption = "TABLE I: Summary statistics", notes = "Columns 1-3: means with standard deviations in parentheses. Column 4: difference in means (Islamic - Secular), standard errors from a two-sample t-test with equal variances in parentheses. * p<0.10, ** p<0.05, *** p<0.01.") |>
     #Mayor types for columns 3 and 4
     group_tt(j = list("Mayor type" = 3:4),
             #Insert section headings 

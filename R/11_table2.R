@@ -118,7 +118,7 @@ table2 <- bind_rows(spec, panel_a, panel_b, p_row)
 names(table2)[1] <- " "
 
 #Format the table with notes, column groups and panel headings
-t2_tt <- tt(table2, notes = "Standard errors clustered by province in parentheses. * p<0.10, ** p<0.05, *** p<0.01.") |>
+t2_tt <- tt(table2, caption = "TABLE II: Islamic rule and high school education", notes = "Standard errors clustered by province in parentheses. * p<0.10, ** p<0.05, *** p<0.01.") |>
   group_tt(j = list("High school completion, age 15-20 (2000)" = 2:9,
                     "Enrollment, 15-30" = 10),
            i = list("Panel A: Women" = 4,
