@@ -1,12 +1,12 @@
 source(here::here("R", "00_Setup.R"))
 source(here::here("R", "02_helpers.R"))
 
-# 1990 census variables
-c90_vars <- c('c90hischshr1520f', 'c90hischshr1520m', 'c90empf', 'c90mrf', 'c90lpop', 'c90ageshr19', 'c90ageshr60', 'c90sexr')
+# Placebo outcomes. High school shares in 1990.
+placebo_outcomes <- c('c90hischshr1520f', 'c90hischshr1520m')
 
-# Keep only female and male high school shares, Islamic mayor indicator, win margin, covariates, province code and the 1990 variables.
+# Keep only female and male high school shares, Islamic mayor indicator, win margin, covariates, province code and the 1990 high school shares.
 match_df <- matched_sample |> 
-    select(hischshr1520f, hischshr1520m, i94, iwm94, all_of(covs), pcode, all_of(c90_vars))
+    select(hischshr1520f, hischshr1520m, i94, iwm94, all_of(covs), pcode, all_of(placebo_outcomes))
 
 # Define the propensity score formula, i94 regressed on the covariates.
 propensity_formula <- reformulate(covs, response = 'i94')
@@ -26,9 +26,6 @@ match_df$pscore <- predict(propensity_model, type = "response")
 # setdiff returns all covariates except vshr_islam1994 
 covs_no_islam <- setdiff(covs, 'vshr_islam1994')
 
-# saves all covariates except those measured in 2000.
-covs_pre_2000 <- setdiff(covs, c('ageshr19', 'ageshr60', 'sexr', 'shhs'))
-
 # Keeps only the municipalities containing 1990 data, for the placebo test.
 placebo_df <- match_df |> filter(!is.na(c90hischshr1520f))
 
@@ -40,7 +37,7 @@ m_default <- matchit(
     distance = 'glm'
 )
 
-# Includes replacement, allowing a secular municipality to be matched to several islamic towns.
+# Includes replacement, allowing a secular municipality to be matched to several Islamic-run municipalities.
 m_replace <- matchit(
     propensity_formula,
     data = match_df,
@@ -62,9 +59,6 @@ m_caliper <- matchit(
 # Matched sample
 md <- match.data(m_caliper)
 
-# Add column in match_df = True for matched municipalities. 
-match_df$matched <- m_caliper$weights > 0
-
 # IPW (ATT), 1 for Islamic municipalities, and pscore/(1-pscore) for secular ones.
 # A secular municipality with high pscore is more similar to the Islamic ones and gets a higher weight.
 match_df <- match_df |>
@@ -84,19 +78,6 @@ m_no_islam <- matchit(
 
 # Matched sample without islamic vote share
 md_no_islam <- match.data(m_no_islam)
-
-# Matching without covariates measured in 2000.
-propensity_formula_pre <- reformulate(covs_pre_2000, response = 'i94')
-
-m_pre_2000 <- matchit(
-    propensity_formula_pre,
-    data = match_df,
-    method = 'nearest',
-    distance = 'glm',
-    caliper = 0.2
-)
-# Matched sample without covariates measured in 2000.
-md_pre_2000 <- match.data(m_pre_2000)
 
 # Same matching, on municipalities with 1990 data.
 m_placebo <- matchit(
@@ -160,18 +141,16 @@ ggsave(here('output', 'figures', 'ext2_love.png'), love, width = 7, height = 5, 
 # Table comparing the three matching versions:
 
 # Version_row builds a row for the versions table from a matchit object and returns:
-# The counts of the Islamic and secular municipalities, and controls with the effective sample size (ESS)
+# The counts of the Islamic and secular municipalities
 # The Std. mean diff. (SMD) of Islamic vote share and the largest SMD among the other covariates
 version_row <- function(m, label, before = FALSE) {
     s <- summary(m)
 
     smd <- abs(if (before) s$sum.all[, 'Std. Mean Diff.'] else s$sum.matched[, 'Std. Mean Diff.'])
     n_row <- if (before) 'All' else 'Matched'
-    ess_row <- if (before) 'All (ESS)' else 'Matched (ESS)'
     c(label,
     as.character(s$nn[n_row, 'Treated']),
     as.character(s$nn[n_row, 'Control']),
-    sprintf('%.1f', s$nn[ess_row, 'Control']),
     sprintf('%.2f', smd['vshr_islam1994']),
     sprintf('%.2f', max(smd[setdiff(covs, 'vshr_islam1994')])))
 }
@@ -184,9 +163,9 @@ versions <- rbind(
 )
 
 versions <- as.data.frame(versions)
-names(versions) <- c(' ', 'Islamic', 'Secular', 'Secular (ESS)', 'Islamic vote share', 'Largest other')
-version_tt <- tt(versions, notes = 'Nearest neighbor matching on the propensity score. Default: one-to-one without replacement. With replacement: a secular-run municipality can be matched to multiple Islamic-run ones. With caliper: the maximum distance between two matched municipalities’ propensity score is 0.2 standard deviations. Islamic-run municipalities without a match are dropped. ESS: the effective sample size. Balance: the absolute standardized mean difference, before matching in the first row, and after in the following rows. Values below 0.1 are considered balanced. Largest other: the largest value among the other covariates.') |>
-    group_tt(j = list('Municipalities used' = 2:4, 'Balance' = 5:6))
+names(versions) <- c(' ', 'Islamic', 'Secular', 'Islamic vote share', 'Largest other')
+version_tt <- tt(versions, notes = 'Nearest neighbor matching on the propensity score. Default: one-to-one without replacement. With replacement: a secular-run municipality can be matched to multiple Islamic-run ones. With caliper: the maximum distance between two matched municipalities’ propensity score is 0.2 standard deviations. Islamic-run municipalities without a match are dropped. Balance: the absolute standardized mean difference, before matching in the first row, and after in the following rows. Values below 0.1 are considered balanced. Largest other: the largest value among the other covariates.') |>
+    group_tt(j = list('Municipalities used' = 2:3, 'Balance' = 4:5))
 
 save_tt(version_tt, here('output', 'tables', 'ext2_versions.tex'), overwrite = TRUE)
 save_tt(version_tt, here('output', 'tables', 'ext2_versions.html'), overwrite = TRUE)
@@ -200,20 +179,22 @@ reg <- function(y, data, w) {
 }
 
 # Runs reg for woman and men and returns three table rows:
-#The estimate with stars, standard error, and the number of observations
+#The estimate, standard error, and the number of observations
 result_rows <- function(y_f, y_m, data, w, label) {
     fits <- list(reg(y_f, data, w), reg(y_m, data, w))
-    est <- sapply(fits, function(f) paste0(sprintf('%.3f', coef(f)[['i94']]), stars(pvalue(f)[['i94']])))
+    est <- sapply(fits, function(f) sprintf('%.3f', coef(f)[['i94']]))
     se <- sapply(fits, function(f) sprintf('(%.3f)', se(f)[['i94']]))
+    pv <- sapply(fits, function(f) sprintf('[%.3f]', pvalue(f)[['i94']]))
     n <- sapply(fits, function(f) as.character(nobs(f)))
-    rbind(c(label, est), c('', se), c('Observations', n))
+    ctrl <- data[data$i94 == 0, ]
+    cm <- sapply(c(y_f, y_m), function(y) sprintf('%.3f', weighted.mean(ctrl[[y]], ctrl[[w]])))
+    rbind(c(label, est), c('', se), c('', pv), c('Control mean', cm), c('Observations', n))
 }
 
 results <- rbind(
     result_rows('hischshr1520f', 'hischshr1520m', md, 'weights', 'Matching with caliper (main)'),
-    result_rows('hischshr1520f', 'hischshr1520m', match_df, 'w_ipw', 'Inverse probability weighting'),
+    result_rows('hischshr1520f', 'hischshr1520m', match_df, 'w_ipw', 'IPW'),
     result_rows('hischshr1520f', 'hischshr1520m', md_no_islam, 'weights', 'Matching without Islamic vote share'),
-    result_rows('hischshr1520f', 'hischshr1520m', md_pre_2000, 'weights', 'Matching without characteristics measured in 2000'),
     result_rows('c90hischshr1520f', 'c90hischshr1520m', md_placebo, 'weights', 'High school share in 1990 (placebo)'),
     result_rows('hischshr1520f', 'hischshr1520m', md_placebo, 'weights', 'High school share in 2000')
 )
@@ -221,8 +202,8 @@ results <- rbind(
 results <- as.data.frame(results)
 names(results) <- c(' ', 'Women', 'Men')
 
-results_tt <- tt(results, notes = 'The estimate is the coefficient on Islamic mayor in 1994 from a weighted regression of the outcome on the mayor indicator. Panel A: the share aged 15-20 with high school education in 2000. Matching: one-to-one nearest neighbor matching on the propensity score with caliper = 0.2. IPW uses all municipalities with weight 1 for Islamic-run and p/(1-p) for secular-run. Then estimated excluding Islamic vote share, and again excluding characteristics measured in 2000 (age share, gender ratio, household size) from the propensity score. Panel B: repeats main matching on municipalities with 1990 census data. Observations are the municipalities used in each regression. Standard errors are clustered by province. * p<0.1, **p<0.05, ***p<0.01.') |>
-    group_tt(i = list('Panel A: Effect of an Islamic mayor' = 1, 'Panel B: Placebo sample' = 13))
+results_tt <- tt(results, notes = 'The estimate is the coefficient on Islamic mayor in 1994 from a weighted regression of the outcome on the mayor indicator. Panel A: the share aged 15-20 with high school education in 2000. Matching: one-to-one nearest neighbor matching on the propensity score with caliper = 0.2. IPW uses all municipalities with weight 1 for Islamic-run and p/(1-p) for secular-run. Then estimated excluding Islamic vote share repeats the matching, but drops vote share from the propensity score. Panel B: repeats main matching on municipalities with 1990 census data. Observations are the municipalities used in each regression. Standard errors are clustered by province in parentheses. P-values in brackets.') |>
+    group_tt(i = list('Panel A: Effect of an Islamic mayor' = 1, 'Panel B: Placebo sample' = 16))
 
 save_tt(results_tt, here('output', 'tables', 'ext2_results.tex'), overwrite = TRUE)
 save_tt(results_tt, here('output', 'tables', 'ext2_results.html'), overwrite = TRUE)
