@@ -3,8 +3,8 @@ source(here::here("R", "02_helpers.R"))
 
 fig1_data <- matched_sample |>
     select(margin =vi1, share = vshr_islam1994) |>
-    filter(share <= 0.75) |>
-    mutate(close = abs(margin) < 0.02)
+    filter(share < 0.75) |> # Do not plot observations with a vote share of 0.75 or more.
+    mutate(close = abs(margin) < 0.02) # Close observations are within 2 percentage points.
 
 diag_line <- tibble(share = c(0, 0.75)) |>
     mutate(margin = 2 * share - 1)

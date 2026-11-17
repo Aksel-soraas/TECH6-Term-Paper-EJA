@@ -70,7 +70,7 @@ panel <- ggplot(fits, aes(x = x)) +
     labs(x = x_label, y = y_label) +
     scale_y_continuous(breaks = y_scale, labels = y_scale, position = y_side) +
     scale_x_continuous(breaks = x_scale, labels = x_scale) +
-    coord_cartesian(ylim = range(y_scale))
+    expand_limits(y = range(y_scale))
 
     if (is.null(x_scale)) {
         panel <- panel + theme(axis.line.x = element_blank())

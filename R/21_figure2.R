@@ -5,11 +5,14 @@ fig2a_data <- df |>
     drop_na(iwm94) |>
     select(margin = iwm94)
 
+# graphs_R4_final.do uses bin(99) which creates 99 equal bins starting at the minimum.
+bin_w <- (max(fig2a_data$margin) - min(fig2a_data$margin)) / 99 
+
 fig2a <- ggplot(fig2a_data, aes(x = margin)) +
     geom_vline(xintercept = 0, linetype = "dashed", color = "grey40") +
     geom_histogram(aes(y = after_stat(count / sum(count) * 100)),
-                    binwidth = 0.02, boundary = 0,
-                    fill = "grey60", color = "grey20") +
+                    binwidth = bin_w, boundary = min(fig2a_data$margin), closed = 'left',
+                    fill = "grey60", color = "grey10", linewidth = 0.2) +
     labs(x = "Islamic Win Margin", y = "Percent") +
     scale_x_continuous(breaks = c(-1, -0.5, 0, 0.5, 1), labels = c(-1, -0.5, 0, 0.5, 1)) +
     scale_y_continuous(limits = c(0, 5.15), expand = c(0, 0), breaks = 0:5) +
@@ -89,7 +92,7 @@ cells$lwr <- cells$fhat - 1.96 * cells$se
 cells$upr <- cells$fhat + 1.96 * cells$se
 
 plot_data <- cells |>
-    filter(cellmp > -0.5, cellmp < 0.5) # Restricts data to be between -0.5 and 0.5 as per the paper specifications.
+    filter(cellmp > -0.5, cellmp < 0.5) # Restricts data to be between -0.5 and 0.5 from graphs_R4_final.do
 
 fig2b <- ggplot(plot_data, aes(x = cellmp)) +
     geom_line(data = filter(plot_data, cellmp < 0), aes(y = fhat)) +
