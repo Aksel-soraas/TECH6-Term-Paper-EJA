@@ -91,5 +91,11 @@ pc <- make_panel("c90hischshr1520f", y4, x4, NULL, NULL, title = "(c) Women in 1
 
 pd <- make_panel("c90hischshr1520m", y4, x4, NULL, NULL,  y_side = "right", title = "(d) Men in 1990")
 
-fig4 <- (pa | pb) / (pc | pd)
+font <- grid::gpar(fontfamily = 'serif', fontsize = 14)
+ylab <- wrap_elements(grid::textGrob('Share of 1-20-year-0lds with High School Degree', rot = 90, gp = font))
+xlab <- wrap_elements(grid::textGrob('Islamic win margin 1994', gp = font))
+
+fig4 <- ylab | ((pa | pb) / (pc | pd) / xlab + plot_layout(heights = c(10, 10, 0.6)))
+fig4 <- fig4 + plot_layout(widths = c(1, 25))
+
 ggsave(here("output", "figures", "figure4.png"), fig4, width = 8, height = 9, dpi = 300)
