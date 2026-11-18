@@ -22,7 +22,7 @@ rd_ext1 <- function(y, bw = h_ext1, ctrl = controls, poly = lin) {
     c(est = coef(fit)[["i94"]], se = se(fit)[["i94"]], p = pvalue(fit)[["i94"]], ci_low = ci[[1]], ci_high = ci[[2]], n = nobs(fit), h = bw)
 }
 
-#Outcome for each row of table ext1: 1990, 2000, change from 1990 to 2000
+#Outcome for each row of Table E2: 1990, 2000, change from 1990 to 2000
 ext1_outcomes <- list(
     Women         = c("c90hischshr1520f", "hischshr1520f", "d_f"),
     Men           = c("c90hischshr1520m", "hischshr1520m", "d_m"),
@@ -95,19 +95,27 @@ ext1_checks <- list(
     "rdrobust, no controls"                = sapply(women_ext1, rdrobust_ext1, ctrl = NULL),
     "rdrobust, only pre-election controls" = sapply(women_ext1, rdrobust_ext1, ctrl = pre_controls))
 
-#Standard error of the women's Did in the main specification
+#Standard error of the women's DiD in the main specification
 did_se <- ext1_run$Women["se", "d_f"]
 
 #Minimum detectable effect at 5% significance and 80% power, and the power to detect the paper's effect
 ext1_mde   <- (qnorm(0.975) + qnorm(0.8)) * did_se 
 ext1_power <- pnorm(paper_effect / did_se - qnorm(0.975))
 
-#Write the power calulations to a text file
+#DiD and 1990 gap excluding municipalities that already had an Islamic mayor elected in 1989
+no89 <- filter(did_sample, abs(iwm94) < h_ext1, i89 == 0)
+fit89 <- lapply(c(gap_1990 = "c90hischshr1520f", did = "d_f"), function(y)
+    feols(reformulate(c("i94", lin, controls), response = y), data = no89, cluster = ~pcode))
+
+#Write the power calculations to a text file
 writeLines(c(
     sprintf("Standard error of the women's DiD: %.4f", did_se),
     sprintf("Paper's effect (full sample, 2000): %.4f", paper_effect),
     sprintf("Minimum detectable effect (5%% significance, 80%% power): %.4f", ext1_mde),
-    sprintf("Power to detect the paper's effect: %.3f", ext1_power)),
+    sprintf("Power to detect the paper's effect: %.3f", ext1_power),
+    #add the 1989 check to the text file
+    sprintf("Excluding 1989 Islamic mayors: 1990 gap %.3f (p = %.3f), DiD %.3f (p = %.3f), N = %d",
+             coef(fit89$gap_1990)[["i94"]], pvalue(fit89$gap_1990)[["i94"]], coef(fit89$did)[["i94"]], pvalue(fit89$did)[["i94"]], nobs(fit89$did))), 
     here("output", "tables", "ext1_power.txt"))
 
 #Data for Figure E1: municipalities with 1990 data within 0.5 of the cutoff
@@ -179,8 +187,8 @@ panel_a_e1 <- rbind(panel_a_e1, c("N", sprintf("%.0f", ext1_run$Women["n", ])),
 panel_b_e1 <- do.call(rbind, Map(format_cells, ext1_robust, names(ext1_robust), with_n_h = TRUE))
 
 #Stack the panels into one table and name the columns
-table_e1 <- as.data.frame(rbind(panel_a_e1, panel_b_e1))
-names(table_e1) <- c(" ", "1990 (pre-election)", "2000", "Change 1990-2000")
+table_e2 <- as.data.frame(rbind(panel_a_e1, panel_b_e1))
+names(table_e2) <- c(" ", "1990 (pre-election)", "2000", "Change 1990-2000")
 
 #Women's share on the secular side at the cutoff. The intercept of a line within the bandwidth fitted to secular municipalities
 secular_at_cutoff <- sapply(women_ext1, function(y)
@@ -190,7 +198,7 @@ secular_at_cutoff <- sapply(women_ext1, function(y)
 n_clusters <- n_distinct(filter(did_sample, abs(iwm94) < h_ext1)$pcode)
 
 #Create table with notes, columns headings and panel headings
-e1_tt <- tt(table_e1, notes = c(
+e1_tt <- tt(table_e2, caption = "TABLE E2: Pre-election gap and difference-in-differences at the cutoff", notes = c(
     "Sample: 1609 municipalities with high school shares for both genders in 1990 and 2000. Treatment is an Islamic mayor elected in 1994; the running variable is the Islamic win margin.",
     "The 1990 shares are measured before the 1994 election and cannot be affected by it; the 1990 column is therefore a placebo test. Change 1990-2000 is the 2000 share minus the 1990 share. Gap (women - men) is the women's share minus the men's share.",
     "Panel A: local linear regression within the paper's IK bandwidth, uniform kernel, the paper's controls, standard errors clustered by province.",
@@ -201,10 +209,10 @@ e1_tt <- tt(table_e1, notes = c(
     group_tt(j = list("High school share, age 15-20" = 2:4),
              i = list("Panel A: Paper's method" = 1, "Panel B: rdrobust" = nrow(panel_a_e1) + 1))
 
-save_tt(e1_tt, here("output", "tables", "table_e1.tex"), overwrite = TRUE)
-save_tt(e1_tt, here("output", "tables", "table_e1.html"), overwrite = TRUE)
+save_tt(e1_tt, here("output", "tables", "table_e2.tex"), overwrite = TRUE)
+save_tt(e1_tt, here("output", "tables", "table_e2.html"), overwrite = TRUE)
 
-#Robustness table: each check formatted like Table E1
+#Robustness table: each check formatted like Table E2
 checks_rows <- Map(function(m, label) {
     cbind(format_cells(m, label),
            c(sprintf("%.0f", tail(na.omit(m["n", ]), 1)), "", ""),
@@ -212,11 +220,11 @@ checks_rows <- Map(function(m, label) {
 }, ext1_checks, names(ext1_checks))
 
 #Stack the checks into one table and name the columns
-table_e1_checks <- as.data.frame(do.call(rbind, checks_rows))
-names(table_e1_checks) <- c(" ", "1990 (pre-election)", "2000", "Change 1990-2000", "N", "Bandwidth")
+table_e3_checks <- as.data.frame(do.call(rbind, checks_rows))
+names(table_e3_checks) <- c(" ", "1990 (pre-election)", "2000", "Change 1990-2000", "N", "Bandwidth")
 
 #Create table with notes, column headings and method headings
-checks_tt <- tt(table_e1_checks, notes = c(
+checks_tt <- tt(table_e3_checks, caption = "TABLE E3: Robustness of the difference-in-differences estimate", notes = c(
     "Sample: 1609 municipalities with high school shares for both genders in 1990 and 2000. Outcome: women's high school share, age 15-20. Each check changes one setting of the main specification.",
     "Paper's method: local linear regression, uniform kernel, standard errors clustered by province. Unless stated otherwise: the paper's IK bandwidth (0.240) and the paper's controls. Pre-election controls drop household size, the two age shares and the gender ratio, which are measured in 2000.",
     "rdrobust: triangular kernel, robust bias-corrected confidence interval and p-value, clustered by province. Unless stated otherwise: own MSE-optimal bandwidth per outcome and the paper's controls.",
@@ -225,8 +233,8 @@ checks_tt <- tt(table_e1_checks, notes = c(
     "95% confidence intervals in brackets. * p<0.10, ** p<0.05, *** p<0.01.")) |>
     group_tt(j = list("Women's high school share, age 15-20" = 2:4),
              i = list("How the 1990 data is used" = 1, "Other checks, paper's method" = 3 * 4 + 1, "rdrobust" = 3 * 10 + 1)) |>
-             #Shade the first block, including the heading and the 12 lines of the 4 rows
-             style_tt(i = 1:13, background = "#eeeeee")
+    #Shade the first block, including the heading and the 12 lines of the 4 rows
+    style_tt(i = 1:13, background = "#eeeeee")
 
-save_tt(checks_tt, here("output", "tables", "table_e1_checks.tex"), overwrite = TRUE)
-save_tt(checks_tt, here("output", "tables", "table_e1_checks.html"), overwrite = TRUE)
+save_tt(checks_tt, here("output", "tables", "table_e3_checks.tex"), overwrite = TRUE)
+save_tt(checks_tt, here("output", "tables", "table_e3_checks.html"), overwrite = TRUE)
