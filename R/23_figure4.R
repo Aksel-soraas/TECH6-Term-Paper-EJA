@@ -28,6 +28,7 @@ local_fhat_at <- function(x0, data, h = 0.08) { # h is smoothing variable define
         mutate(dist = x - x0, 
         w = pmax(0, 1 - dist^2 / (5*h^2)))
     fit <- lm(y ~ dist, data = side, weights = w)
+    # Bands differ from author's, lm's standard error is not equal to Stata's lpolyci standard error.
     summary(fit)$coefficients[1, 1:2]
 }
 
