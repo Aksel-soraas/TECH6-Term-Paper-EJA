@@ -22,8 +22,6 @@ fig2a <- ggplot(fig2a_data, aes(x = margin)) +
     axis.ticks = element_line(linewidth = 0.3),
     panel.border = element_rect(color = "black", fill = NA, linewidth = 0.6))
 
-ggsave(here("output", "figures", "figure2a.png"), fig2a, width = 7, height = 5, dpi = 300)
-
 # Sample as defined in authors replication file graphs_R4_final.do
 fig2b_data <- df |> 
     drop_na(iwm94, hischshr1520f) |>
@@ -114,4 +112,10 @@ fig2b <- ggplot(plot_data, aes(x = cellmp)) +
     plot.caption = element_text(hjust = 0),
     plot.caption.position = "panel")
 
-ggsave(here("output", "figures", "figure2b.png"), fig2b, width = 7, height = 5, dpi = 300)
+fig2 <- fig2a /
+        wrap_elements(grid::textGrob("(a) Global histogram", y = 0.8, gp = grid::gpar(fontfamily = 'serif', fontsize = 14))) /
+        fig2b /
+        wrap_elements(grid::textGrob("(b) Density test", y = 0.8, gp = grid::gpar(fontfamily = 'serif', fontsize = 14))) +
+        plot_layout(heights = c(10, 0.8, 10, 0.8))
+
+ggsave(here("output", "figures", "figure2.png"), fig2, width = 7, height = 11, dpi = 300)
