@@ -23,13 +23,14 @@ bins <- df |>
         summarise(mid = mean(x), mean_y = mean(y))
 
 # Local linear fit on each side of the cutoff.
-# Assumed Epanechnikov-type weights. As defined in https://www.stata.com/manuals/rkdensity.pdf. It is stata's default kernel so we will use it as the paper does not specifically state anything.
+# Epanechnikov-type weights. As defined in https://www.stata.com/manuals/rkdensity.pdf. It is stata's default kernel.
 local_fhat_at <- function(x0, data, h = 0.06) { # h is smoothing variable defined for figure 3 in authors replication file graphs_R4_final.do
     side <- data |> 
         filter(if (x0 < 0) x < 0 else x >= 0) |> 
         mutate(dist = x - x0, 
         w = pmax(0, 1 - dist^2 / (5*h^2)))
     fit <- lm(y ~ dist, data = side, weights = w)
+    # Bands differ from author's, lm's standard error is not equal to Stata's lpolyci standard error.
     summary(fit)$coefficients[1, 1:2]
 }
 

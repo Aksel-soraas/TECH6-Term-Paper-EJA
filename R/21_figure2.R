@@ -69,7 +69,7 @@ fhat_at <- function(x0) {
 
 cells$fhat <- sapply(cells$cellmp, fhat_at) # Evaluates the curve at every real bin midpoint and stores in cells
 
-# Measures the standard error of the curve at each midpoint. The SE bands are the curve +- 1.96 the McCrary formula. 
+# Measures the standard error of the curve at each midpoint. The SE bands are the curve +- 1.96 the standard error of the McCrary formula. From DCdensity.ado. 
 # m measures how much of the bandwidth the cutoff has cut off. 
 se_at <- function(x, fx) {
     if (x > 0) {
