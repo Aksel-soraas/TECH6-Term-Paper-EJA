@@ -163,8 +163,8 @@ versions <- rbind(
 )
 
 versions <- as.data.frame(versions)
-names(versions) <- c(' ', 'Islamic', 'Secular', 'Islamic vote share', 'Largest other')
-version_tt <- tt(versions, notes = 'Nearest neighbor matching on the propensity score. Default: one-to-one without replacement. With replacement: a secular-run municipality can be matched to multiple Islamic-run ones. With caliper: the maximum distance between two matched municipalities’ propensity score is 0.2 standard deviations. Islamic-run municipalities without a match are dropped. Balance: the absolute standardized mean difference, before matching in the first row, and after in the following rows. Values below 0.1 are considered balanced. Largest other: the largest value among the other covariates.') |>
+names(versions) <- c(' ', 'Islamic', 'Secular', 'Islamic vote share SMD', 'Largest other SMD')
+version_tt <- tt(versions) |>
     group_tt(j = list('Municipalities used' = 2:3, 'Balance' = 4:5))
 
 save_tt(version_tt, here('output', 'tables', 'ext2_versions.tex'), overwrite = TRUE)
@@ -178,17 +178,14 @@ reg <- function(y, data, w) {
     weights = reformulate(w), cluster = ~pcode)
 }
 
-# Runs reg for woman and men and returns three table rows:
-#The estimate, standard error, and the number of observations
+# Runs reg for woman and men and returns two table rows:
+# The estimate with stars (pvalue) and standard error, and number of municipalities used.
 result_rows <- function(y_f, y_m, data, w, label) {
     fits <- list(reg(y_f, data, w), reg(y_m, data, w))
-    est <- sapply(fits, function(f) sprintf('%.3f', coef(f)[['i94']]))
-    se <- sapply(fits, function(f) sprintf('(%.3f)', se(f)[['i94']]))
-    pv <- sapply(fits, function(f) sprintf('[%.3f]', pvalue(f)[['i94']]))
-    n <- sapply(fits, function(f) as.character(nobs(f)))
-    ctrl <- data[data$i94 == 0, ]
-    cm <- sapply(c(y_f, y_m), function(y) sprintf('%.3f', weighted.mean(ctrl[[y]], ctrl[[w]])))
-    rbind(c(label, est), c('', se), c('', pv), c('Control mean', cm), c('Observations', n))
+    est <- sapply(fits, function(f) sprintf('%.1f%s', 100 * coef(f)[['i94']], stars(pvalue(f)[['i94']])))
+    se <- sapply(fits, function(f) sprintf('(%.1f)', 100 * se(f)[['i94']]))
+    n <- format(nobs(fits[[1]]), big.mark = ',')
+    rbind(c(label, est, n), c('', se, ''))
 }
 
 results <- rbind(
@@ -196,14 +193,13 @@ results <- rbind(
     result_rows('hischshr1520f', 'hischshr1520m', match_df, 'w_ipw', 'IPW'),
     result_rows('hischshr1520f', 'hischshr1520m', md_no_islam, 'weights', 'Matching without Islamic vote share'),
     result_rows('c90hischshr1520f', 'c90hischshr1520m', md_placebo, 'weights', 'High school share in 1990 (placebo)'),
-    result_rows('hischshr1520f', 'hischshr1520m', md_placebo, 'weights', 'High school share in 2000')
+    result_rows('hischshr1520f', 'hischshr1520m', md_placebo, 'weights', 'Same municipalities: High school share in 2000')
 )
 
 results <- as.data.frame(results)
-names(results) <- c(' ', 'Women', 'Men')
+names(results) <- c(' ', 'Women', 'Men', 'Municipalities')
 
-results_tt <- tt(results, notes = 'The estimate is the coefficient on Islamic mayor in 1994 from a weighted regression of the outcome on the mayor indicator. Panel A: the share aged 15-20 with high school education in 2000. Matching: one-to-one nearest neighbor matching on the propensity score with caliper = 0.2. IPW uses all municipalities with weight 1 for Islamic-run and p/(1-p) for secular-run. Then estimated excluding Islamic vote share repeats the matching, but drops vote share from the propensity score. Panel B: repeats main matching on municipalities with 1990 census data. Observations are the municipalities used in each regression. Standard errors are clustered by province in parentheses. P-values in brackets.') |>
-    group_tt(i = list('Panel A: Effect of an Islamic mayor' = 1, 'Panel B: Placebo sample' = 16))
+results_tt <- tt(results, notes = 'Estimates are in percentage points. Standard errors in parentheses are clustered by province. * p < 0.1, ** p < 0.05, *** p < 0.01.')
 
 save_tt(results_tt, here('output', 'tables', 'ext2_results.tex'), overwrite = TRUE)
 save_tt(results_tt, here('output', 'tables', 'ext2_results.html'), overwrite = TRUE)

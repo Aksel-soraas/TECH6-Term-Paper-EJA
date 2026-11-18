@@ -1,8 +1,6 @@
 \begin{table}
 \centering
-\begin{talltblr}[         %% tabularray outer open
-entry=none,label=none,
-note{}={Nearest neighbor matching on the propensity score. Default: one-to-one without replacement. With replacement: a secular-run municipality can be matched to multiple Islamic-run ones. With caliper: the maximum distance between two matched municipalities’ propensity score is 0.2 standard deviations. Islamic-run municipalities without a match are dropped. Balance: the absolute standardized mean difference, before matching in the first row, and after in the following rows. Values below 0.1 are considered balanced. Largest other: the largest value among the other covariates.},
+\begin{tblr}[         %% tabularray outer open
 ]                     %% tabularray outer close
 {                     %% tabularray inner open
 colspec={Q[]Q[]Q[]Q[]Q[]},
@@ -19,10 +17,10 @@ cell{1}{4}={c=2}{halign=c},
 cell{1}{5}={}{halign=c},
 }                     %% tabularray inner close
 & Municipalities used &  & Balance &  \\
-& Islamic & Secular & Islamic vote share & Largest other \\
+& Islamic & Secular & Islamic vote share SMD & Largest other SMD \\
 Before matching & 315 & 2314 & 2.74 & 0.71 \\
 Default & 315 & 315 & 0.89 & 0.19 \\
 With replacement & 315 & 123 & 0.12 & 1.65 \\
 With caliper (main) & 171 & 171 & 0.05 & 0.13 \\
-\end{talltblr}
+\end{tblr}
 \end{table}
