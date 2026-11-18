@@ -14,10 +14,13 @@ panel_data <- fig3_data |>
 panel_xy <- panel_data |>
     select(x = iwm94, y = all_of(y_var))
 
-bins <- panel_xy |>
+bins <- df |>
+    filter(abs(iwm94) < 0.32) |>
+    select(x = iwm94, y = all_of(y_var)) |>
+    drop_na() |>
     mutate(bin = floor(x / 0.08)) |>
         group_by(bin) |>
-        summarise(mid = (first(bin) + 0.5) * 0.08, mean_y = mean(y))
+        summarise(mid = mean(x), mean_y = mean(y))
 
 # Local linear fit on each side of the cutoff.
 # Assumed Epanechnikov-type weights. As defined in https://www.stata.com/manuals/rkdensity.pdf. It is stata's default kernel so we will use it as the paper does not specifically state anything.

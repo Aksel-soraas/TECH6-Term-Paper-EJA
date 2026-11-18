@@ -1,8 +1,6 @@
 source(here::here("R", "00_Setup.R"))
 source(here::here("R", "02_helpers.R"))
 
-# TODO: Add shared titles for x and y axis.
-
 fig4_data <- df |>
     drop_na(iwm94) |>
     filter(abs(iwm94) < 0.5)
@@ -15,10 +13,12 @@ panel_data <- fig4_data |>
 panel_xy <- panel_data |>
     select(x = iwm94, y = all_of(y_var))
 
-bins <- panel_xy |>
+bins <- df |>
+    filter(abs(iwm94) < 0.52) |>
+    select(x = iwm94, y = all_of(y_var)) |>
     mutate(bin = floor(x / 0.04)) |>
         group_by(bin) |>
-        summarise(mid = (first(bin) + 0.5) * 0.04, mean_y = mean(y))
+        summarise(mid = mean(x), mean_y = mean(y, na.rm = TRUE))
 
 # Local linear fit on each side of the cutoff.
 # Epanechnikov-type weights. As defined in https://www.stata.com/manuals/rkdensity.pdf. It is stata's default kernel.
