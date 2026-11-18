@@ -46,14 +46,17 @@ m_replace <- matchit(
     replace = TRUE
 )
 
-# Includes caliper = 0.2, which says the maximum distance in a match is 0.2 standard deviations.
+# Includes caliper, which decides the maximum distance in a match.
 # It drops municipalities with no close neighbours. 
+
+caliper_val <- 0.05
+
 m_caliper <- matchit(
     propensity_formula,
     data = match_df,
     method = 'nearest',
     distance = 'glm',
-    caliper = 0.2
+    caliper = caliper_val
 )
 
 # Matched sample
@@ -73,7 +76,7 @@ m_no_islam <- matchit(
     data = match_df,
     method = 'nearest',
     distance = 'glm', 
-    caliper = 0.2
+    caliper = caliper_val
 )
 
 # Matched sample without islamic vote share
@@ -85,7 +88,7 @@ m_placebo <- matchit(
     data = placebo_df,
     method = 'nearest',
     distance = 'glm',
-    caliper = 0.2
+    caliper = caliper_val
 )
 # Matched sample on municipalities with 1990 data.
 md_placebo <- match.data(m_placebo)
