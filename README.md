@@ -39,8 +39,8 @@ haven 2.5.5, here 1.0.2, modelsummary 2.6.0, tinytable 0.19.0, patchwork 1.3.2,
 MatchIt 4.7.2, cobalt 5.0.0, rdd 0.57.
 
 The prediction part of Extension I (`ML.ipynb`) is written in Python 3 and requires
-`jupyter`, `numpy`, `pandas`, `scikit-learn` and `matplotlib`.
-
+`jupyter`, `numpy`, `pandas`, `scikit-learn` and `matplotlib`. `run_all.R` runs it at the end (runtime approximately 4 minutes). It can also be run on its own from the project folder with
+`jupyter nbconvert --to notebook --execute --inplace ML.ipynb`, or opened in Jupyter and run cell by cell. 
 
 ## Data
 `Data/regdata0.dta` is the municipal dataset from Meyersson's replication package
@@ -61,7 +61,7 @@ It is the only input; every table and figure is generated from it.
 | `R/20_figure1.R` – `R/23_figure4.R` | Figures 1–4 | `figure1.png` … `figure4.png` |
 | `R/30_extension1.R` | Extension I: DiD at the RD cutoff | `table_e2`, `table_e3_checks`, `figure_e1.png`, `ext1_power.txt` |
 | `R/31_extension2.R` | Extension II: propensity score matching | `ext2_results`, `ext2_versions`, `ext2_overlap.png`, `ext2_love.png` |
-| `ML.ipynb` | Extension I: predicting treatment with OLS, Ridge and Lasso (Python) | `ml_summary_table.png` |
+| `ML.ipynb` | Extension I: predicting treatment with OLS, Ridge and Lasso (Python) | `ml_summary_table.csv/.html/.tex` |
 
 
 Tables are saved as both `.tex` and `.html`.
