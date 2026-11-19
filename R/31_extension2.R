@@ -206,3 +206,19 @@ results_tt <- tt(results, notes = 'Estimates are in percentage points. Standard 
 
 save_tt(results_tt, here('output', 'tables', 'ext2_results.tex'), overwrite = TRUE)
 save_tt(results_tt, here('output', 'tables', 'ext2_results.html'), overwrite = TRUE)
+
+# Table showing the mean win margins of the dropped Islamic run municipalities, the matched Islamic municipalities and the matched secular run municipalities.
+win_margin <- match_df |>
+    mutate(group = case_when(
+        i94 == 1 & m_caliper$weights > 0 ~ 'Matched Islamic-run',
+        i94 == 1 ~ 'Dropped Islamic-run',
+        m_caliper$weights > 0 ~ 'Matched secular-run')) |>
+        filter(!is.na(group)) |>
+        group_by(group) |>
+        summarise(n = n(), mean = round(100 * mean(iwm94), 1),
+                    n_12 = sum(abs(iwm94) >= 0.12), n_24 = sum(abs(iwm94) >= 0.24))
+
+names(win_margin) <- c(' ', 'Municipalities', 'Mean win margin (pp)', '> 12 pp.', '> 24 pp.')
+win_margin_tt <- tt(win_margin)
+save_tt(win_margin_tt, here('output', 'tables', 'ext2_win_margin.tex'), overwrite = TRUE)
+save_tt(win_margin_tt, here('output', 'tables', 'ext2_win_margin.html'), overwrite = TRUE)
