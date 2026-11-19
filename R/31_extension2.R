@@ -211,8 +211,7 @@ save_tt(results_tt, here('output', 'tables', 'ext2_results.html'), overwrite = T
 win_margin <- match_df |>
     mutate(group = case_when(
         i94 == 1 & m_caliper$weights > 0 ~ 'Matched Islamic-run',
-        i94 == 1 ~ 'Dropped Islamic-run',
-        m_caliper$weights > 0 ~ 'Matched secular-run')) |>
+        i94 == 1 ~ 'Dropped Islamic-run')) |>
         filter(!is.na(group)) |>
         group_by(group) |>
         summarise(n = n(), mean = round(100 * mean(iwm94), 1),
